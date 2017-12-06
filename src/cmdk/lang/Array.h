@@ -2,6 +2,7 @@
 #define _LANG_ARRAY_H
 
 
+#include <vector>
 #include <assert.h>
 #include <lang/internal/config_inl.h>
 
@@ -21,20 +22,20 @@ template <class T, int N=1> class Array
 public:
 	/** Creates an empty array. */
 	Array() :
-		m_data(0), m_cap(0), m_len(0), m_dynamicBuffer(0)
+		m_data(0), m_cap(0), m_len(0)
 	{
 	}
 
 	/** Creates an array of n elements. */
 	explicit Array( int n ) :
-		m_data(0), m_cap(0), m_len(0), m_dynamicBuffer(0)
+		m_data(0), m_cap(0), m_len(0)
 	{
 		setSize( n );
 	}
 
 	/** Copy by value. */
 	Array( const Array<T,N>& other ) :
-		m_data(0), m_cap(0), m_len(0), m_dynamicBuffer(0)
+		m_data(0), m_cap(0), m_len(0)
 	{
 		*this = other;
 	}
@@ -42,9 +43,7 @@ public:
 	///
 	~Array()
 	{
-		delete[] m_dynamicBuffer;
-		m_dynamicBuffer = 0;
-		m_data = 0;
+		m_dynamicBuffer.clear();
 	}
 
 	/** Copy by value. */
@@ -67,7 +66,7 @@ public:
 	void add( const T& item )
 	{
 		T itemCopy( item );
-		if ( m_len >= m_cap )
+		if ( m_len == m_cap )
 			realloc( m_len+1 );
 		m_data[m_len++] = itemCopy;
 	}
@@ -91,8 +90,10 @@ public:
 
 		if ( size > m_cap )
 			realloc( size );
+		else if (m_len > N) m_dynamicBuffer.resize(size);
 
 		m_len = size;
+		assert(m_len <= N || (m_dynamicBuffer.size() == m_len && m_dynamicBuffer.capacity() == m_cap));
 	}
 
 	/** Sets number of elements in the array to 0. */
@@ -139,55 +140,44 @@ public:
 	}
 
 private:
+	typedef std::vector<T> Vec;
 	T*		m_data;
 	int		m_cap;
 	int		m_len;
-	T*		m_dynamicBuffer;
+	Vec		m_dynamicBuffer;
 	T		m_staticBuffer[N];
 
 	void realloc( int size )
 	{
-		if ( size > N )
+		if ( size > N ) // требуемый размер не может быть умещен в статическом массиве
 		{
-			int cap = m_cap * 2;
-			if ( cap < 16 )
-				cap = 16;
-			if ( cap < size )
-				cap = size;
-			
-			T* data = new T[cap];
-			int count = m_len;
-			if ( count > cap )
-				count = cap;
-			for ( int i = 0 ; i < count ; ++i )
+			if (m_len <= N) // если текущие данные лежат в статическом буфере, перегоняем их в динамический
 			{
-				data[i] = m_data[i];
-				m_data[i] = T();
+				for ( int i = 0 ; i < m_len ; ++i ) 
+				{
+					m_dynamicBuffer.push_back(m_staticBuffer[i]);
+					m_staticBuffer[i] = T();				
+				}
 			}
-			delete[] m_dynamicBuffer;
-			m_dynamicBuffer = 0;
+			m_dynamicBuffer.resize(size);
 
-			m_data = m_dynamicBuffer = data;
-			m_cap = cap;
+			m_data = &m_dynamicBuffer[0];
+			m_cap = m_dynamicBuffer.capacity();
 		}
-		else
-		{
-			T* data = m_staticBuffer;
-
-			if ( m_len > N )
+		else // данные нового размера умещаются в статическом буфере
+		{	
+			if ( m_len > N ) // если текущие данные лежат в динамическом буфере, перегоняем их в статический
 			{
 				assert( size < m_len );
 				for ( int i = 0 ; i < size ; ++i )
 				{
-					data[i] = m_data[i];
-					m_data[i] = T();
+					m_staticBuffer[i] = m_dynamicBuffer[i];
 				}
-				delete[] m_dynamicBuffer;
-				m_dynamicBuffer = 0;
+				m_dynamicBuffer.clear();
 			}
 
-			m_data = data;
-			m_cap = size;
+			m_data = m_staticBuffer;
+			m_cap = N;
 		}
 	}
 
