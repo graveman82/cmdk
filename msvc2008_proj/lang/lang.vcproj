@@ -42,7 +42,7 @@
 				Name="VCCLCompilerTool"
 				Optimization="0"
 				AdditionalIncludeDirectories="..\config;..\..\src\cmdk;..\..\src\cmdk\lang\internal"
-				PreprocessorDefinitions="WIN32;_DEBUG;_LIB;LANG_WIN32"
+				PreprocessorDefinitions="WIN32;_DEBUG;_LIB;LANG_WIN32;CMDK_BUGS_TRAPPING_MODE"
 				MinimalRebuild="true"
 				BasicRuntimeChecks="3"
 				RuntimeLibrary="3"
@@ -151,6 +151,10 @@
 			UniqueIdentifier="{4FC737F1-C7A5-4376-A066-2A32D752A2FF}"
 			>
 			<File
+				RelativePath="..\..\src\cmdk\lang\BugsTrap.cpp"
+				>
+			</File>
+			<File
 				RelativePath="..\..\src\cmdk\lang\Character.cpp"
 				>
 			</File>
@@ -230,6 +234,10 @@
 			>
 			<File
 				RelativePath="..\..\src\cmdk\lang\Array.h"
+				>
+			</File>
+			<File
+				RelativePath="..\..\src\cmdk\lang\BugsTrap.h"
 				>
 			</File>
 			<File
